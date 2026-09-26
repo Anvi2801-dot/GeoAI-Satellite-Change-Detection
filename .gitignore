@@ -1,0 +1,12 @@
+# Python build files
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Large Data & Models (Do not push to GitHub)
+data/raw/
+data/processed/
+models/*.pth
+.ds_store
+.ipynb_checkpoints/
