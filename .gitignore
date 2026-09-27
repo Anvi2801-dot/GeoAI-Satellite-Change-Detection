@@ -15,7 +15,7 @@ env/
 data/
 models/*.pth
 models/*.pt
-
+/runs/vis
 # macOS System Files
 .DS_Store
 .DS_Store?

@@ -1,0 +1,2 @@
+split,precision,recall,f1,iou,oa
+test,0.92739,0.90057,0.91378,0.84125,0.99134
