@@ -58,10 +58,52 @@ Reference test F1 on LEVIR-CD: FC-Siam-diff 86.3, BIT 89.3, ChangeFormer 90.4.
 
 ## 4. Distributed inference + area metrics
 
+The Spark stage has its own environment, because `pyspark==3.4.1` and the
+other pins in `requirements.txt` do not support Python 3.12+.
+
+### Prerequisites
+
+- **Java 17** (Spark 3.4 supports 8/11/17). Other Java versions can stay
+  installed; Spark uses the one `JAVA_HOME` points to.
 ```bash
+  sudo apt install openjdk-17-jdk-headless
+  ls /usr/lib/jvm/          # expect java-17-openjdk-amd64
+```
+  `src/spark/session.py` sets `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`.
+  On another OS or path, edit that line (macOS with Homebrew:
+  `/opt/homebrew/opt/openjdk@17`).
+
+- **Python 3.11 virtual environment** with the pinned requirements:
+```bash
+  pip install --user uv
+  uv venv -p 3.11 .venv-spark
+  source .venv-spark/bin/activate
+  uv pip install -r requirements.txt
+```
+  Training (`train.py`, `evaluate.py`) can use any recent Python/PyTorch
+  environment; the saved `state_dict` loads in either.
+
+### Run
+
+In `main.py`, set `dataset_path` to the split to process (e.g.
+`data/raw/LEVIR-CD/test`), then:
+
+```bash
+source .venv-spark/bin/activate
 python main.py
 ```
 
-Loads `models/siamese_unet.pth`, runs inference over `data/raw/LEVIR-CD/train` with
-Spark `mapPartitions`, converts changed pixels to m² / hectares (0.5 m/px), and
-exports `data/processed/metrics_summary.csv` for the Power BI dashboard.
+The first run downloads the Sedona jars from Maven Central into `~/.ivy2`.
+The pipeline loads `models/siamese_unet.pth`, runs inference over image
+pairs with Spark `mapPartitions`, converts changed pixels to m² / hectares
+(0.5 m/px), and writes `data/processed/metrics_summary.csv` for the Power BI
+dashboard. Spark's web UI is at http://localhost:4040 while it runs.
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `.../bin/java: No such file or directory`, `Java gateway process exited` | `JAVA_HOME` points to a path that doesn't exist | Fix the `JAVA_HOME` line in `session.py` |
+| `unresolved dependency: edu.ucar#cdm-core;5.4.2: not found` | NetCDF dependency of geotools-wrapper is not on Maven Central | Already excluded via `spark.jars.excludes`; the pipeline doesn't use NetCDF |
+| Process `Killed` / out of memory during inference | `local[*]` runs one full 1024×1024 inference per CPU core at once | Use `.master("local[2]")` (or `local[1]`) in `session.py` |
+| `Skipping SedonaKepler/SedonaPyDeck import` | Optional map-plotting extras not installed | Harmless; ignore |

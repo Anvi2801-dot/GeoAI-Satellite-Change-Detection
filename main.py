@@ -19,7 +19,7 @@ def main():
         sys.exit(1)
 
     # 2. Ingest Dataset
-    dataset_path = os.path.join("data", "raw", "LEVIR-CD", "train")
+    dataset_path = os.path.join("data", "raw", "LEVIR-CD", "test")
 
     if os.path.exists(dataset_path):
         print("\n==========================================================================")

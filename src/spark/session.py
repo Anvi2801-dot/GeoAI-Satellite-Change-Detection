@@ -2,8 +2,9 @@ import os
 import sys
 
 # 1. Point explicitly to Java 11 Home
-os.environ["JAVA_HOME"] = "/opt/homebrew/opt/openjdk@11"
+os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
 os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
+
 os.environ["PATH"] = os.environ["JAVA_HOME"] + "/bin:" + os.environ.get("PATH", "")
 
 from pyspark.sql import SparkSession
@@ -30,9 +31,10 @@ def init_geoai_spark_session(app_name: str = "GeoAI-Satellite-Change-Detection",
     # 4. Construct PySpark Builder
     builder = SedonaContext.builder() \
         .appName(app_name) \
-        .master("local[*]") \
+        .master("local[2]") \
         .config("spark.driver.memory", driver_memory) \
         .config("spark.jars.packages", SEDONA_PACKAGES) \
+        .config("spark.jars.excludes", "edu.ucar:cdm-core") \
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
         .config("spark.kryo.registrator", "org.apache.sedona.core.serde.SedonaKryoRegistrator") \
         .config("spark.sql.extensions", "org.apache.sedona.sql.SedonaSqlExtensions") \
